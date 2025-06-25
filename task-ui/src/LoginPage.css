@@ -1,0 +1,94 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+  }
+  
+  .container {
+    background-color: #ad97d4;
+    height: 100vh;
+    padding: 40px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .inner-box {
+    background-color: white;
+    border: 5px solid black;
+    padding: 20px;
+    width: 80%;
+    border-radius: 16px;
+    max-width: 1000px;
+    height: 500px;
+    position: relative;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .register-btn {
+    padding: 8px 12px;
+    font-weight: bold;
+    border: 2px solid black;
+    background: none;
+    cursor: pointer;
+  }
+
+  .login-box {
+    position: absolute;
+    top: 180px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 300px;
+  }
+  
+  .login-box input {
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid #ccc;
+  }
+  
+  .login-box button {
+    padding: 15px;
+    border-radius: 10px;
+    background-color: black;
+    color: white;
+    border: none;
+  }
+
+  .info-box {
+    position: absolute;
+    top: 120px;
+    right: 40px;
+    width: 300px;
+    padding: 20px;
+    background-color: #fefefe;
+    border: 2px solid black;
+    border-radius: 8px;
+    font-size: 14px;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .info-box h3 {
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .info-box p {
+    margin: 0;
+    line-height: 1.5;
+  }
+  
+  
+  .error {
+    color: red;
+    font-size: 13px;
+    text-align: center;
+  }
+  
