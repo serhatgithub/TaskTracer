@@ -8,18 +8,8 @@ function App() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-
-    if (!token) {
-      setScreen("login");
-    } else {
-      setScreen("tasks");
-    }
+    setScreen(token ? "tasks" : "login");
   }, []);
-
-  const handleLogout = () => {
-    localStorage.clear();
-    setScreen("login");
-  };
 
   if (screen === "loading") return <p>Yükleniyor...</p>;
 
@@ -28,10 +18,11 @@ function App() {
 
   if (screen === "user")
     return <UserPage onBack={() => setScreen("tasks")} />;
+
   if (screen === "tasks")
     return <TasksPage onUserClick={() => setScreen("user")} />;
-  
-  return <TasksPage onGoUser={() => setScreen("user")} onLogout={handleLogout} />;
+
+  return null; // hiç ulaşılmaz, ama safety için
 }
 
 export default App;

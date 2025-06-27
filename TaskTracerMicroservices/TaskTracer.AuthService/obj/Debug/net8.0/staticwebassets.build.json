@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "t3bFWrnwEphsUe6McMY5Dn7GeielpXP2Nl8UgXb2yZk=",
+  "Source": "TaskTracer.AuthService",
+  "BasePath": "_content/TaskTracer.AuthService",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

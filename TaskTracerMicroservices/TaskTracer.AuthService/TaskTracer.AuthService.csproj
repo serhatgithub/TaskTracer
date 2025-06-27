@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework> <!-- Kullandığınız .NET sürümüne göre ayarlayın -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Docker için gerekli olabilir, şimdilik yoruma alabiliriz veya ekleyebiliriz -->
+    <!-- <InvariantGlobalization>true</InvariantGlobalization> -->
+    <!-- <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS> -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" /> <!-- Kullandığınız .NET sürümüne uygun versiyon -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" /> <!-- Kullandığınız .NET sürümüne uygun versiyon -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0"> <!-- Kullandığınız .NET sürümüne uygun versiyon -->
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" /> <!-- Veya daha güncel bir Swagger versiyonu -->
+    <!-- Microsoft.IdentityModel.Tokens ve System.IdentityModel.Tokens.Jwt genellikle JwtBearer ile gelir ama emin olmak için eklenebilir -->
+    <!-- <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.3" /> -->
+  </ItemGroup>
+
+</Project>

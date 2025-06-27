@@ -34,6 +34,7 @@ body, html {
   display: flex;
   gap: 20px;
   justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .task-column {
@@ -50,7 +51,7 @@ body, html {
   background-color: #fffdd0;
 }
 
-.done-column {
+.task-column.done-column {
   background-color: #f5fef5;
 }
 
@@ -58,6 +59,16 @@ body, html {
   text-align: center;
   margin-bottom: 10px;
   font-weight: bold;
+}
+
+.filter-input {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  box-sizing: border-box;
 }
 
 .task-input {
@@ -71,6 +82,7 @@ body, html {
   padding: 10px;
   border-radius: 6px;
   border: 1px solid #aaa;
+  font-size: 14px;
 }
 
 .task-input button {
@@ -89,7 +101,7 @@ body, html {
 }
 
 .task-column li {
-  background-color: #f4f1fa; /* varsayılan - todo */
+  background-color: #f4f1fa;
   padding: 12px;
   margin-bottom: 12px;
   border-radius: 8px;
@@ -97,13 +109,11 @@ body, html {
   transition: background-color 0.3s ease;
 }
 
-/* Doing */
 .middle-column li {
   background-color: #fff7d6;
 }
 
-/* Done */
-.done-column li {
+.task-column.done-column li {
   background-color: #e4fbe4;
 }
 
@@ -118,4 +128,14 @@ body, html {
   color: red;
   margin-top: 20px;
   text-align: center;
+}
+
+@media (max-width: 768px) {
+  .task-columns {
+    flex-direction: column;
+  }
+
+  .task-column {
+    width: 100%;
+  }
 }

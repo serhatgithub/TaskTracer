@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "KSZbN3JsWoLOj3sS+SOKvC6zFnUodFoB+CipCHwe4fQ=",
+  "Source": "TaskTracer.TaskService",
+  "BasePath": "_content/TaskTracer.TaskService",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

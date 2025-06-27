@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using TaskTracer.Api.Data;
 using TaskTracer.Api.Models;
 using TaskTracer.Api.Services;
@@ -15,27 +14,27 @@ public class AuthController : ControllerBase
 {
     private readonly TaskTrackerContext _ctx;
     private readonly TokenService _tok;
+    private readonly PasswordService _password;
 
-    public AuthController(TaskTrackerContext ctx, TokenService tok)
+    public AuthController(TaskTrackerContext ctx, TokenService tok, PasswordService password)
     {
         _ctx = ctx;
         _tok = tok;
+        _password = password;
     }
 
-    // DTO’lar
     public record RegisterDto(string Username, string Password);
     public record LoginDto(string Username, string Password);
     public record PasswordUpdateRequest(string OldPassword, string NewPassword);
     public record UsernameUpdateRequest(string NewUsername);
 
-    // Kullanıcı Kaydı
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterDto dto)
     {
         if (await _ctx.Users.AnyAsync(u => u.Username == dto.Username))
-            return BadRequest("username_exists");
+            return BadRequest(new { error = "username_exists" });
 
-        CreateHash(dto.Password, out var hash, out var salt);
+        _password.CreateHash(dto.Password, out var hash, out var salt);
 
         _ctx.Users.Add(new User
         {
@@ -48,19 +47,17 @@ public class AuthController : ControllerBase
         return StatusCode(201);
     }
 
-    // Kullanıcı Girişi
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginDto dto)
     {
         var user = await _ctx.Users.SingleOrDefaultAsync(u => u.Username == dto.Username);
-        if (user is null || !Verify(dto.Password, user))
-            return Unauthorized("invalid_credentials");
+        if (user is null || !_password.Verify(dto.Password, user.PasswordHash, user.PasswordSalt))
+            return Unauthorized(new { error = "invalid_credentials" });
 
         var token = _tok.CreateToken(user);
         return Ok(new { token });
     }
 
-    // 🔒 Şifre Değiştirme
     [Authorize]
     [HttpPatch("password")]
     public async Task<IActionResult> ChangePassword([FromBody] PasswordUpdateRequest req)
@@ -69,10 +66,10 @@ public class AuthController : ControllerBase
         var user = await _ctx.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null) return NotFound();
 
-        if (!Verify(req.OldPassword, user))
-            return BadRequest("wrong_password");
+        if (!_password.Verify(req.OldPassword, user.PasswordHash, user.PasswordSalt))
+            return BadRequest(new { error = "wrong_password" });
 
-        CreateHash(req.NewPassword, out var hash, out var salt);
+        _password.CreateHash(req.NewPassword, out var hash, out var salt);
         user.PasswordHash = hash;
         user.PasswordSalt = salt;
 
@@ -80,7 +77,6 @@ public class AuthController : ControllerBase
         return NoContent();
     }
 
-    // 👤 Kullanıcı Adı Değiştirme
     [Authorize]
     [HttpPatch("username")]
     public async Task<IActionResult> ChangeUsername([FromBody] UsernameUpdateRequest req)
@@ -89,32 +85,17 @@ public class AuthController : ControllerBase
         var user = await _ctx.Users.FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null) return NotFound();
 
-        var exists = await _ctx.Users.AnyAsync(u => u.Username == req.NewUsername);
-        if (exists) return BadRequest("username_exists");
+        var exists = await _ctx.Users.AnyAsync(u => u.Username == req.NewUsername && u.Id != userId);
+        if (exists) return BadRequest(new { error = "username_exists" });
 
         user.Username = req.NewUsername;
         await _ctx.SaveChangesAsync();
         return NoContent();
     }
 
-    // Yardımcı Fonksiyonlar
-    private static void CreateHash(string pw, out byte[] hash, out byte[] salt)
-    {
-        using var h = new HMACSHA512();
-        salt = h.Key;
-        hash = h.ComputeHash(System.Text.Encoding.UTF8.GetBytes(pw));
-    }
-
-    private static bool Verify(string pw, User u)
-    {
-        using var h = new HMACSHA512(u.PasswordSalt);
-        var comp = h.ComputeHash(System.Text.Encoding.UTF8.GetBytes(pw));
-        return comp.SequenceEqual(u.PasswordHash);
-    }
-
     private int GetUserId()
     {
-        var idStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         return int.TryParse(idStr, out var id) ? id : 0;
     }
 }

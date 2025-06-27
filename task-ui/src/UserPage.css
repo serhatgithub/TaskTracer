@@ -1,75 +1,100 @@
 .user-page {
-    max-width: 500px;
-    margin: 40px auto;
-    font-family: sans-serif;
-    padding: 20px;
-    border: 2px solid #aaa;
-    border-radius: 12px;
-    background-color: #fafafa;
+  max-width: 500px;
+  margin: 40px auto;
+  font-family: sans-serif;
+  padding: 20px;
+  border: 2px solid #aaa;
+  border-radius: 12px;
+  background-color: #fafafa;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.welcome-text {
+  text-align: center;
+  font-size: 16px;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.input-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-group input {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #aaa;
+  font-size: 14px;
+}
+
+.input-group button {
+  padding: 10px;
+  background-color: #6a19d7;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.input-group button:hover {
+  background-color: #5315ad;
+}
+
+.back-button {
+  padding: 8px 12px;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.logout-button {
+  padding: 8px 14px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.logout-button:hover {
+  background-color: #d32f2f;
+}
+
+.error {
+  color: #d32f2f;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: -10px;
+}
+
+.success {
+  color: #388e3c;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: -10px;
+}
+
+/* 📱 Responsive */
+@media (max-width: 600px) {
+  .user-page {
+    margin: 20px 10px;
+    padding: 16px;
   }
-  
-  .welcome-text {
-    text-align: center;
-    font-size: 16px;
-    margin-bottom: 20px;
-    color: #333;
-  }
-  
-  .input-group {
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .input-group input {
-    padding: 10px;
-    border-radius: 6px;
-    border: 1px solid #aaa;
-  }
-  
-  .input-group button {
-    padding: 10px;
-    background-color: #6a19d7;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  
-  .back-button {
-    padding: 8px 12px;
-    border: none;
-    background: #eee;
-    cursor: pointer;
-    border-radius: 6px;
-  }
-  
-  .error {
-    color: red;
-    text-align: center;
-    font-size: 14px;
-  }
-  
-  .success {
-    color: green;
-    text-align: center;
-    font-size: 14px;
-  }
-  .button-group {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 20px;
-  }
-  
-  .logout-button {
-    padding: 8px 14px;
-    background-color: #f44336;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  
-  
+}

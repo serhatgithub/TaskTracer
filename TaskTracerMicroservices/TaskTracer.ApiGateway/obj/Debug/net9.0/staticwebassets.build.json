@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "foOCQjVvt3blJFKeyGaNlf2/p2uIJA0S5tyrWv+Aczs=",
+  "Source": "TaskTracer.ApiGateway",
+  "BasePath": "_content/TaskTracer.ApiGateway",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

@@ -1,0 +1,28 @@
+# .dockerignore
+
+# Bağımlılıklar (NuGet paketleri restore ile zaten gelecek)
+**/bin
+**/obj
+
+# Kullanıcıya özel dosyalar
+*.user
+*.suo
+
+# IDE ve araç dosyaları
+.vscode
+.vs
+
+# Dockerfile'ın kendisi (imaja dahil edilmesine gerek yok)
+Dockerfile
+
+# Git dosyaları
+.git
+.gitignore
+
+# Log dosyaları (eğer varsa)
+*.log
+
+# Veritabanı dosyası (Bu, volume ile yönetilmeli, imaja gömülmemeli)
+*.db
+*.db-shm
+*.db-wal

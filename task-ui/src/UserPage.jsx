@@ -7,18 +7,24 @@ function UserPage({ onBack }) {
   const [displayName, setDisplayName] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [currentUsername, setCurrentUsername] = useState("");
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
 
-  const headers = {
-    Authorization: "Bearer " + localStorage.getItem("token"),
+  const token = localStorage.getItem("token");
+
+  const jsonHeaders = {
+    Authorization: "Bearer " + token,
     "Content-Type": "application/json",
+  };
+
+  const textHeaders = {
+    Authorization: "Bearer " + token,
+    "Content-Type": "text/plain",
   };
 
   useEffect(() => {
     axios
-      .get("http://localhost:5242/api/v1/users/me", { headers })
+      .get("http://localhost:5242/api/v1/users/me", { headers: jsonHeaders })
       .then((res) => setDisplayName(res.data.username))
       .catch(() => setDisplayName(""));
   }, []);
@@ -27,15 +33,16 @@ function UserPage({ onBack }) {
     try {
       await axios.patch(
         "http://localhost:5242/api/v1/users/username",
-        JSON.stringify(username),
-        { headers }
+        username,
+        { headers: textHeaders }
       );
       setOk("Kullanıcı adı değiştirildi.");
       setError("");
       setDisplayName(username);
       setUsername("");
-    } catch {
-      setError("Kullanıcı adı güncellenemedi.");
+    } catch (err) {
+      const apiError = err.response?.data?.error;
+      setError(apiError || "Kullanıcı adı güncellenemedi.");
       setOk("");
     }
   };
@@ -45,21 +52,22 @@ function UserPage({ onBack }) {
       await axios.patch(
         "http://localhost:5242/api/v1/users/password",
         { oldPassword, newPassword },
-        { headers }
+        { headers: jsonHeaders }
       );
       setOk("Şifre değiştirildi.");
       setError("");
       setOldPassword("");
       setNewPassword("");
-    } catch {
-      setError("Şifre güncellenemedi.");
+    } catch (err) {
+      const apiError = err.response?.data?.error;
+      setError(apiError || "Şifre güncellenemedi.");
       setOk("");
     }
   };
 
   const handleLogout = () => {
     localStorage.clear();
-    window.location.reload(); // Sayfayı yenileyerek login ekranına döner
+    window.location.reload();
   };
 
   return (

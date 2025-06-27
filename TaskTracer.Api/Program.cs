@@ -7,12 +7,12 @@ using TaskTracer.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// JWT servisleri
+// Servisler
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<PasswordService>();
 builder.Services.AddCors();
 
-
+// JWT Auth
 builder.Services
     .AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", opt =>
@@ -32,65 +32,50 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-// DB bağlantısı
+// DB
 builder.Services.AddDbContext<TaskTrackerContext>(opt =>
     opt.UseSqlite(builder.Configuration.GetConnectionString("Default")));
 
 // Controllers
 builder.Services.AddControllers()
-    .AddJsonOptions(opt =>
-    {
-        opt.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-    });
+    .AddJsonOptions(opt => opt.JsonSerializerOptions.PropertyNameCaseInsensitive = true);
 
-
-// Swagger (manual Swashbuckle kurulumu)
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "TaskTracer API", Version = "v1" });
-
-    // JWT Auth için Swagger'a bearer token header'ı ekleyelim
-    var securityScheme = new OpenApiSecurityScheme
+    var jwtSecurityScheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
         Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme.",
+        Description = "JWT Bearer Authorization header.",
     };
-    c.AddSecurityDefinition("Bearer", securityScheme);
-
-    var securityReq = new OpenApiSecurityRequirement
+    c.AddSecurityDefinition("Bearer", jwtSecurityScheme);
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-        {
-            securityScheme,
-            new string[] {}
-        }
-    };
-    c.AddSecurityRequirement(securityReq);
+        { jwtSecurityScheme, new string[] {} }
+    });
 });
 
 var app = builder.Build();
 
-// Swagger sadece geliştirmede aktif
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors(policy =>
     policy.AllowAnyOrigin()
           .AllowAnyMethod()
           .AllowAnyHeader());
-
-
 app.MapControllers();
 
 app.Run();

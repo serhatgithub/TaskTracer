@@ -1,6 +1,8 @@
+// task-ui/src/LoginPage.jsx
 import { useState } from "react";
 import axios from "axios";
 import "./LoginPage.css";
+import { API_BASE_URL } from './apiConfig'; // API_BASE_URL'i import ediyoruz
 
 function LoginPage({ onLogin }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -12,9 +14,15 @@ function LoginPage({ onLogin }) {
     e.preventDefault();
     setError("");
 
+    if (!username.trim() || !password) {
+      setError("Kullanıcı adı ve şifre boş bırakılamaz.");
+      return;
+    }
+
+    // URL'ler API Gateway üzerinden olacak şekilde güncellendi
     const url = isRegistering
-      ? "http://localhost:5242/api/v1/auth/register"
-      : "http://localhost:5242/api/v1/auth/login";
+      ? `${API_BASE_URL}/auth/register`
+      : `${API_BASE_URL}/auth/login`;
 
     try {
       const res = await axios.post(url, { username, password });
@@ -22,18 +30,28 @@ function LoginPage({ onLogin }) {
       if (isRegistering) {
         alert("Kayıt başarılı! Şimdi giriş yapabilirsin.");
         setIsRegistering(false);
+        setUsername(""); // Başarılı kayıttan sonra inputları temizleyelim
+        setPassword(""); // Başarılı kayıttan sonra inputları temizleyelim
         return;
       }
 
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("username", username);
       onLogin();
     } catch (err) {
-      setError(
-        isRegistering
-          ? "Bu kullanıcı adı zaten kayıtlı."
-          : "Kullanıcı adı veya şifre hatalı."
-      );
+      // API'lerimizden dönen hata mesajı yapısını kontrol edelim.
+      // Bizim AuthController'da { message: "..." } şeklinde dönüyorduk.
+      const apiErrorMessage = err.response?.data?.message; 
+      const status = err.response?.status;
+
+      console.error("Login/Register Error Response:", err.response); // Hata ayıklama için log
+
+      if (isRegistering && status === 400 && apiErrorMessage?.toLowerCase().includes("username already exists")) {
+        setError("Bu kullanıcı adı zaten kayıtlı.");
+      } else if (!isRegistering && status === 401 && apiErrorMessage?.toLowerCase().includes("invalid username or password")) {
+        setError("Kullanıcı adı veya şifre hatalı.");
+      } else {
+        setError(apiErrorMessage || "Bir hata oluştu. Lütfen tekrar deneyin.");
+      }
     }
   };
 
@@ -55,13 +73,18 @@ function LoginPage({ onLogin }) {
           <button
             className="register-btn"
             type="button"
-            onClick={() => setIsRegistering(!isRegistering)}
+            onClick={() => {
+                setIsRegistering(!isRegistering);
+                setError(""); // Mod değiştirirken hatayı temizle
+                setUsername(""); // Mod değiştirirken inputları temizle
+                setPassword(""); // Mod değiştirirken inputları temizle
+            }}
           >
             {isRegistering ? "Giriş" : "Kayıt"}
           </button>
         </div>
 
-        <div className="background-image" />
+        {/* <div className="background-image" /> // Bu div'in CSS'te bir karşılığı yoksa kaldırılabilir */}
 
         <form onSubmit={handleSubmit} className="login-box">
           <input
