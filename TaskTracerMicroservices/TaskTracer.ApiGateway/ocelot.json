@@ -6,8 +6,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 5001 
+          "Host": "authservice",
+          "Port": 80 
         }
       ],
       "UpstreamPathTemplate": "/gateway/auth/{everything}",
@@ -19,8 +19,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 5002
+          "Host": "userservice",
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/gateway/users/{everything}",
@@ -32,8 +32,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 5003 
+          "Host": "taskservice",
+          "Port": 80 
         }
       ],
       "UpstreamPathTemplate": "/gateway/tasks",
@@ -44,8 +44,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 5003 
+          "Host": "taskservice",
+          "Port": 80 
         }
       ],
       "UpstreamPathTemplate": "/gateway/tasks/{everything}",
@@ -53,6 +53,6 @@
     }
   ],
   "GlobalConfiguration": {
-    "BaseUrl": "http://localhost:5000" 
+  
   }
 }

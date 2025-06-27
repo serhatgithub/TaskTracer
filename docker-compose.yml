@@ -1,0 +1,95 @@
+services:
+  postgres_db:
+    image: postgres:14-alpine
+    container_name: postgres-db-container
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_DB=tasktracer_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d tasktracer_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  authservice:
+    container_name: auth-service-container
+    build:
+      context: ./TaskTracerMicroservices/TaskTracer.AuthService
+    restart: always
+    ports:
+      - "5001:80" # HATA AYIKLAMA İÇİN EKLENDİ
+    environment:
+      - ASPNETCORE_URLS=http://+:80 # GARANTİ PORT DİNLEMESİ İÇİN EKLENDİ
+      - ConnectionStrings__AuthDbConnection=Host=postgres_db;Port=5432;Database=tasktracer_db;Username=admin;Password=mysecretpassword
+      - Jwt__Key=İnternetProgramlamaİcinCokGizliBirKeyYazdimBunuKimseylePaylasamamLutfenBendenIstemeCunkuCokCokGizli
+      - Jwt__Issuer=TaskTracer.AuthService
+      - Jwt__Audience=TaskTracer.ApiClients
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
+  userservice:
+    container_name: user-service-container
+    build:
+      context: ./TaskTracerMicroservices/TaskTracer.UserService
+    restart: always
+    environment:
+      - ASPNETCORE_URLS=http://+:80 # GARANTİ PORT DİNLEMESİ İÇİN EKLENDİ
+      - ConnectionStrings__UserDbConnection=Host=postgres_db;Port=5432;Database=tasktracer_db;Username=admin;Password=mysecretpassword
+      - Jwt__Key=İnternetProgramlamaİcinCokGizliBirKeyYazdimBunuKimseylePaylasamamLutfenBendenIstemeCunkuCokCokGizli
+      - Jwt__Issuer=TaskTracer.AuthService
+      - Jwt__Audience=TaskTracer.ApiClients
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
+  taskservice:
+    container_name: task-service-container
+    build:
+      context: ./TaskTracerMicroservices/TaskTracer.TaskService
+    restart: always
+    environment:
+      - ASPNETCORE_URLS=http://+:80 
+      - ConnectionStrings__TaskDbConnection=Host=postgres_db;Port=5432;Database=tasktracer_db;Username=admin;Password=mysecretpassword
+      - Jwt__Key=İnternetProgramlamaİcinCokGizliBirKeyYazdimBunuKimseylePaylasamamLutfenBendenIstemeCunkuCokCokGizli
+      - Jwt__Issuer=TaskTracer.AuthService
+      - Jwt__Audience=TaskTracer.ApiClients
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
+  apigateway:
+    container_name: api-gateway-container
+    build:
+      context: ./TaskTracerMicroservices/TaskTracer.ApiGateway
+    ports:
+      - "5000:80"
+    restart: always
+    environment:
+      - ASPNETCORE_URLS=http://+:80 # GARANTİ PORT DİNLEMESİ İÇİN EKLENDİ
+    depends_on:
+      - authservice
+      - userservice
+      - taskservice
+
+  frontend:
+    container_name: frontend-container
+    build:
+      context: ./task-ui
+      args:
+        # Build anında React'e doğru API adresini veriyoruz
+        - REACT_APP_API_BASE_URL=http://localhost:5000/gateway
+    ports:
+      - "3000:80"
+    restart: always
+    depends_on:
+      - apigateway
+
+volumes:
+  postgres_data:

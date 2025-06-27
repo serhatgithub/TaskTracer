@@ -136,3 +136,5 @@ C:\Users\Serhat\Desktop\TaskTracer\TaskTracerMicroservices\TaskTracer.AuthServic
 C:\Users\Serhat\Desktop\TaskTracer\TaskTracerMicroservices\TaskTracer.AuthService\obj\Debug\net9.0\TaskTracer.AuthService.pdb
 C:\Users\Serhat\Desktop\TaskTracer\TaskTracerMicroservices\TaskTracer.AuthService\obj\Debug\net9.0\TaskTracer.AuthService.genruntimeconfig.cache
 C:\Users\Serhat\Desktop\TaskTracer\TaskTracerMicroservices\TaskTracer.AuthService\obj\Debug\net9.0\ref\TaskTracer.AuthService.dll
+C:\Users\Serhat\Desktop\TaskTracer\TaskTracerMicroservices\TaskTracer.AuthService\bin\Debug\net9.0\Npgsql.dll
+C:\Users\Serhat\Desktop\TaskTracer\TaskTracerMicroservices\TaskTracer.AuthService\bin\Debug\net9.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll

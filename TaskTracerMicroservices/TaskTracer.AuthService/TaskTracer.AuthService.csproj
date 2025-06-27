@@ -10,12 +10,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" /> <!-- Kullandığınız .NET sürümüne uygun versiyon -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" /> <!-- Kullandığınız .NET sürümüne uygun versiyon -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" /> <!-- Kullandığınız .NET sürümüne uygun versiyon -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0"> <!-- Kullandığınız .NET sürümüne uygun versiyon -->
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" /> <!-- Veya daha güncel bir Swagger versiyonu -->
     <!-- Microsoft.IdentityModel.Tokens ve System.IdentityModel.Tokens.Jwt genellikle JwtBearer ile gelir ama emin olmak için eklenebilir -->
     <!-- <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.3" /> -->

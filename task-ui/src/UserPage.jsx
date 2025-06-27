@@ -1,6 +1,9 @@
+// task-ui/src/UserPage.jsx
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "./UserPage.css";
+import { API_BASE_URL } from './apiConfig'; // DÜZELTME 1: Merkezi API adresi import edildi.
 
 function UserPage({ onBack }) {
   const [username, setUsername] = useState("");
@@ -12,56 +15,65 @@ function UserPage({ onBack }) {
 
   const token = localStorage.getItem("token");
 
+  // Tüm istekler için ortak header.
   const jsonHeaders = {
     Authorization: "Bearer " + token,
     "Content-Type": "application/json",
   };
-
-  const textHeaders = {
-    Authorization: "Bearer " + token,
-    "Content-Type": "text/plain",
-  };
-
+  
   useEffect(() => {
+    // DÜZELTME 2: Istek API Gateway üzerinden yapılıyor.
     axios
-      .get("http://localhost:5242/api/v1/users/me", { headers: jsonHeaders })
+      .get(`${API_BASE_URL}/users/me`, { headers: jsonHeaders })
       .then((res) => setDisplayName(res.data.username))
       .catch(() => setDisplayName(""));
-  }, []);
+  }, []); // Boş bağımlılık dizisi, sadece component yüklendiğinde çalışmasını sağlar.
 
   const handleUsername = async () => {
+    if (!username.trim()) {
+        setError("Yeni kullanıcı adı boş olamaz.");
+        return;
+    }
+    setError("");
+    setOk("");
+
     try {
+      // DÜZELTME 3: Istek API Gateway üzerinden ve doğru formatta (nesne olarak) yapılıyor.
       await axios.patch(
-        "http://localhost:5242/api/v1/users/username",
-        username,
-        { headers: textHeaders }
+        `${API_BASE_URL}/users/username`,
+        { newUsername: username }, // Backend'in beklediği DTO formatı
+        { headers: jsonHeaders }
       );
-      setOk("Kullanıcı adı değiştirildi.");
-      setError("");
+      setOk("Kullanıcı adı başarıyla değiştirildi.");
       setDisplayName(username);
       setUsername("");
     } catch (err) {
-      const apiError = err.response?.data?.error;
+      const apiError = err.response?.data?.message;
       setError(apiError || "Kullanıcı adı güncellenemedi.");
-      setOk("");
     }
   };
 
   const handlePassword = async () => {
+    if (!oldPassword || !newPassword) {
+        setError("Eski ve yeni şifre alanları boş olamaz.");
+        return;
+    }
+    setError("");
+    setOk("");
+    
     try {
+      // DÜZELTME 4: Istek API Gateway üzerinden yapılıyor.
       await axios.patch(
-        "http://localhost:5242/api/v1/users/password",
+        `${API_BASE_URL}/users/password`,
         { oldPassword, newPassword },
         { headers: jsonHeaders }
       );
-      setOk("Şifre değiştirildi.");
-      setError("");
+      setOk("Şifre başarıyla değiştirildi.");
       setOldPassword("");
       setNewPassword("");
     } catch (err) {
-      const apiError = err.response?.data?.error;
-      setError(apiError || "Şifre güncellenemedi.");
-      setOk("");
+      const apiError = err.response?.data?.message;
+      setError(apiError || "Şifre güncellenemedi. Eski şifrenizi doğru girdiğinizden emin olun.");
     }
   };
 

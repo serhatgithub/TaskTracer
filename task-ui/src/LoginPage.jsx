@@ -1,8 +1,9 @@
 // task-ui/src/LoginPage.jsx
+
 import { useState } from "react";
 import axios from "axios";
 import "./LoginPage.css";
-import { API_BASE_URL } from './apiConfig'; // API_BASE_URL'i import ediyoruz
+import { API_BASE_URL } from './apiConfig'; 
 
 function LoginPage({ onLogin }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -19,7 +20,6 @@ function LoginPage({ onLogin }) {
       return;
     }
 
-    // URL'ler API Gateway üzerinden olacak şekilde güncellendi
     const url = isRegistering
       ? `${API_BASE_URL}/auth/register`
       : `${API_BASE_URL}/auth/login`;
@@ -30,20 +30,18 @@ function LoginPage({ onLogin }) {
       if (isRegistering) {
         alert("Kayıt başarılı! Şimdi giriş yapabilirsin.");
         setIsRegistering(false);
-        setUsername(""); // Başarılı kayıttan sonra inputları temizleyelim
-        setPassword(""); // Başarılı kayıttan sonra inputları temizleyelim
+        setUsername("");
+        setPassword("");
         return;
       }
 
       localStorage.setItem("token", res.data.token);
       onLogin();
     } catch (err) {
-      // API'lerimizden dönen hata mesajı yapısını kontrol edelim.
-      // Bizim AuthController'da { message: "..." } şeklinde dönüyorduk.
-      const apiErrorMessage = err.response?.data?.message; 
+      const apiErrorMessage = err.response?.data?.message;
       const status = err.response?.status;
 
-      console.error("Login/Register Error Response:", err.response); // Hata ayıklama için log
+      console.error("Login/Register Error Response:", err.response);
 
       if (isRegistering && status === 400 && apiErrorMessage?.toLowerCase().includes("username already exists")) {
         setError("Bu kullanıcı adı zaten kayıtlı.");
@@ -75,16 +73,14 @@ function LoginPage({ onLogin }) {
             type="button"
             onClick={() => {
                 setIsRegistering(!isRegistering);
-                setError(""); // Mod değiştirirken hatayı temizle
-                setUsername(""); // Mod değiştirirken inputları temizle
-                setPassword(""); // Mod değiştirirken inputları temizle
+                setError("");
+                setUsername("");
+                setPassword("");
             }}
           >
             {isRegistering ? "Giriş" : "Kayıt"}
           </button>
         </div>
-
-        {/* <div className="background-image" /> // Bu div'in CSS'te bir karşılığı yoksa kaldırılabilir */}
 
         <form onSubmit={handleSubmit} className="login-box">
           <input

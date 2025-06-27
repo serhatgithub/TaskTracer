@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TaskTracer.AuthService")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+030de45dfcfb4025c9b7228a519ed87cf86b7d7b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6a38dd8fc59d8657c2c7d82a8ee5f75cc4aac420")]
 [assembly: System.Reflection.AssemblyProductAttribute("TaskTracer.AuthService")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TaskTracer.AuthService")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

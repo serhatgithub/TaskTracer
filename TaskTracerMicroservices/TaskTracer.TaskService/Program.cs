@@ -4,13 +4,14 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using TaskTracer.TaskService.Data;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // DbContext (SQLite)
 var connectionString = builder.Configuration.GetConnectionString("TaskDbConnection");
 builder.Services.AddDbContext<TaskDbContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseNpgsql(connectionString));
 
 // Controller'lar
 builder.Services.AddControllers();

@@ -6,6 +6,8 @@ using System.Security.Claims;
 using System.Text;
 using TaskTracer.UserService.Data;
 using TaskTracer.UserService.Services;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +17,7 @@ builder.Services.AddScoped<PasswordService>();
 // 2. Veritabanı bağlantısı
 var connectionString = builder.Configuration.GetConnectionString("UserDbConnection");
 builder.Services.AddDbContext<UserDbContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseNpgsql(connectionString));
 
 // 3. Controller'ları ekle
 builder.Services.AddControllers();

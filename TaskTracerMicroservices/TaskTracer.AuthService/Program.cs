@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using TaskTracer.AuthService.Data;
 using TaskTracer.AuthService.Services;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,10 +13,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<PasswordService>();
 
-// 2. Veritabanı Bağlantısını Kaydetme (SQLite)
+// 2. Veritabanı Bağlantısını Kaydetme (PostgreSQL)
 var connectionString = builder.Configuration.GetConnectionString("AuthDbConnection");
 builder.Services.AddDbContext<AuthDbContext>(options =>
-    options.UseSqlite(connectionString));
+    options.UseNpgsql(connectionString));
 
 // 3. Controller'ları ekleme
 builder.Services.AddControllers();
@@ -37,7 +38,6 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "TaskTracer Authentication API", Version = "v1" });
 
-    // JWT Bearer için Swagger yapılandırması
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -79,7 +79,7 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
 // JWT Auth eğer yapılandırıldıysa burada açılmalı
@@ -88,21 +88,28 @@ app.UseCors("AllowAll");
 
 app.MapControllers();
 
-// Veritabanı Migration'larını otomatik uygula
-using (var scope = app.Services.CreateScope())
+// Otomatik migration için bir helper fonksiyonu
+void ApplyMigrations(IApplicationBuilder app)
 {
-    var services = scope.ServiceProvider;
-    try
+    using (var scope = app.ApplicationServices.CreateScope())
     {
-        var context = services.GetRequiredService<AuthDbContext>();
-        context.Database.Migrate();
-    }
-    catch (Exception ex)
-    {
+        var services = scope.ServiceProvider;
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Veritabanı migration işlemi sırasında hata oluştu.");
-        Console.WriteLine($"DB Migration Error: {ex.Message}");
+        try
+        {
+            logger.LogInformation("Veritabanı migration'ları uygulanıyor...");
+            var context = services.GetRequiredService<AuthDbContext>();
+            context.Database.Migrate();
+            logger.LogInformation("Veritabanı migration'ları başarıyla uygulandı.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Veritabanı migration işlemi sırasında kritik bir hata oluştu.");
+        }
     }
 }
+
+// Migration'ları uygula
+ApplyMigrations(app);
 
 app.Run();
