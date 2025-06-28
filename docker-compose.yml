@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   postgres_db:
     image: postgres:14-alpine
@@ -21,11 +23,12 @@ services:
     container_name: auth-service-container
     build:
       context: ./TaskTracerMicroservices/TaskTracer.AuthService
+    image: senin-dockerhub-kullanici-adin/tasktracer-authservice:latest
     restart: always
     ports:
-      - "5001:80" # HATA AYIKLAMA İÇİN EKLENDİ
+      - "5001:80"
     environment:
-      - ASPNETCORE_URLS=http://+:80 # GARANTİ PORT DİNLEMESİ İÇİN EKLENDİ
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__AuthDbConnection=Host=postgres_db;Port=5432;Database=tasktracer_db;Username=admin;Password=mysecretpassword
       - Jwt__Key=İnternetProgramlamaİcinCokGizliBirKeyYazdimBunuKimseylePaylasamamLutfenBendenIstemeCunkuCokCokGizli
       - Jwt__Issuer=TaskTracer.AuthService
@@ -38,9 +41,10 @@ services:
     container_name: user-service-container
     build:
       context: ./TaskTracerMicroservices/TaskTracer.UserService
+    image: senin-dockerhub-kullanici-adin/tasktracer-userservice:latest
     restart: always
     environment:
-      - ASPNETCORE_URLS=http://+:80 # GARANTİ PORT DİNLEMESİ İÇİN EKLENDİ
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__UserDbConnection=Host=postgres_db;Port=5432;Database=tasktracer_db;Username=admin;Password=mysecretpassword
       - Jwt__Key=İnternetProgramlamaİcinCokGizliBirKeyYazdimBunuKimseylePaylasamamLutfenBendenIstemeCunkuCokCokGizli
       - Jwt__Issuer=TaskTracer.AuthService
@@ -53,9 +57,12 @@ services:
     container_name: task-service-container
     build:
       context: ./TaskTracerMicroservices/TaskTracer.TaskService
+    image: senin-dockerhub-kullanici-adin/tasktracer-taskservice:latest
     restart: always
+    ports:
+      - "5003:80"
     environment:
-      - ASPNETCORE_URLS=http://+:80 
+      - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__TaskDbConnection=Host=postgres_db;Port=5432;Database=tasktracer_db;Username=admin;Password=mysecretpassword
       - Jwt__Key=İnternetProgramlamaİcinCokGizliBirKeyYazdimBunuKimseylePaylasamamLutfenBendenIstemeCunkuCokCokGizli
       - Jwt__Issuer=TaskTracer.AuthService
@@ -68,11 +75,12 @@ services:
     container_name: api-gateway-container
     build:
       context: ./TaskTracerMicroservices/TaskTracer.ApiGateway
+    image: senin-dockerhub-kullanici-adin/tasktracer-apigateway:latest
     ports:
       - "5000:80"
     restart: always
     environment:
-      - ASPNETCORE_URLS=http://+:80 # GARANTİ PORT DİNLEMESİ İÇİN EKLENDİ
+      - ASPNETCORE_URLS=http://+:80
     depends_on:
       - authservice
       - userservice
@@ -83,8 +91,8 @@ services:
     build:
       context: ./task-ui
       args:
-        # Build anında React'e doğru API adresini veriyoruz
         - REACT_APP_API_BASE_URL=http://localhost:5000/gateway
+    image: senin-dockerhub-kullanici-adin/tasktracer-frontend:latest
     ports:
       - "3000:80"
     restart: always
