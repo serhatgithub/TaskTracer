@@ -4,62 +4,45 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TaskTracer.TaskService.Data;
 using TaskTracer.TaskService.Models;
-// TaskStatus enum'ı Models namespace'inde olduğu için ayrıca using'e gerek yok
-// ama açıkça belirtmek isterseniz: using TaskStatus = TaskTracer.TaskService.Models.TaskStatus;
-
+using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace TaskTracer.TaskService.Controllers
 {
     [ApiController]
     [Route("api/tasks")]
-    [Authorize] // Bu controller'daki tüm endpoint'ler yetkilendirme gerektirir
+    [Authorize]
     public class TasksController : ControllerBase
     {
         private readonly TaskDbContext _ctx;
+        private readonly ILogger<TasksController> _logger;
 
-        public TasksController(TaskDbContext ctx)
+        public TasksController(TaskDbContext ctx, ILogger<TasksController> logger)
         {
             _ctx = ctx;
+            _logger = logger;
         }
 
-        private int GetUserId()
-        {
-            var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return int.TryParse(idStr, out var id) ? id : 0;
-        }
+        private int GetUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         [HttpGet]
-        public async Task<IActionResult> GetTasks([FromQuery] Models.TaskStatus? status) // Namespace ile çakışmayı önlemek için Models.TaskStatus
+        public async Task<IActionResult> GetTasks()
         {
             var userId = GetUserId();
-            if (userId == 0) return Unauthorized();
-
-            var query = _ctx.Tasks.Where(t => t.UserId == userId);
-
-            if (status.HasValue)
-            {
-                query = query.Where(t => t.Status == status.Value);
-            }
-
-            var result = await query
-                .OrderBy(t => t.Order) // Önce Order'a göre sırala
-                .Select(t => new { t.Id, t.Title, t.Status, t.Order }) // Sadece gerekli alanları seç
+            var tasks = await _ctx.Tasks
+                .Where(t => t.UserId == userId)
+                .OrderBy(t => t.Status)
+                .ThenBy(t => t.Order)
+                .Select(t => new { t.Id, t.Title, t.Status, t.Order })
                 .ToListAsync();
-
-            return Ok(result);
+            return Ok(tasks);
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateTask(TaskCreateDto dto)
         {
             var userId = GetUserId();
-            if (userId == 0) return Unauthorized();
-
-            // Yeni görevin o statüsteki sırasını belirle
-            var order = await _ctx.Tasks
-                .Where(t => t.UserId == userId && t.Status == dto.Status)
-                .CountAsync(); // Mevcut görev sayısını alarak son sıraya ekle
-
+            var order = await _ctx.Tasks.CountAsync(t => t.UserId == userId && t.Status == dto.Status);
             var task = new TaskItem
             {
                 Title = dto.Title,
@@ -67,153 +50,123 @@ namespace TaskTracer.TaskService.Controllers
                 Order = order,
                 UserId = userId
             };
-
             _ctx.Tasks.Add(task);
             await _ctx.SaveChangesAsync();
-
-            // Oluşturulan kaynağın detaylarını dönmek iyi bir pratiktir.
-            return CreatedAtAction(nameof(GetTaskById), new { id = task.Id }, 
-                new { task.Id, task.Title, task.Status, task.Order, task.UserId });
+            return CreatedAtAction(nameof(GetTasks), new { id = task.Id }, task);
         }
 
-        // Tek bir görevi ID ile getirmek için bir endpoint (CreatedAtAction için gerekli)
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetTaskById(int id)
+        [HttpPatch("{id}/order")]
+        public async Task<IActionResult> ChangeTaskOrder(int id, [FromQuery(Name= "dir")] string direction)
         {
+            _logger.LogInformation("ChangeTaskOrder çağrıldı. Task ID: {TaskId}, Yön: {Direction}", id, direction);
+
             var userId = GetUserId();
-            if (userId == 0) return Unauthorized();
-
-            var task = await _ctx.Tasks
-                                 .Where(t => t.Id == id && t.UserId == userId)
-                                 .Select(t => new { t.Id, t.Title, t.Status, t.Order, t.UserId })
-                                 .FirstOrDefaultAsync();
-
-            if (task == null)
+            if (userId == 0)
             {
+                _logger.LogWarning("Yetkisiz erişim denemesi: Kullanıcı ID'si 0.");
+                return Unauthorized();
+            }
+            _logger.LogInformation("Kullanıcı ID: {UserId}", userId);
+
+            var taskToMove = await _ctx.Tasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+            if (taskToMove == null)
+            {
+                _logger.LogWarning("Görev bulunamadı. Task ID: {TaskId}", id);
                 return NotFound();
             }
-            return Ok(task);
+            _logger.LogInformation("Taşınacak görev bulundu: '{TaskTitle}', Mevcut Sıra: {Order}", taskToMove.Title, taskToMove.Order);
+
+            if (direction.ToLower() != "up" && direction.ToLower() != "down")
+            {
+                _logger.LogWarning("Geçersiz yön belirtildi: {Direction}", direction);
+                return BadRequest(new { message = "Invalid direction." });
+            }
+
+            _logger.LogInformation("Komşu görev aranıyor...");
+            var siblingTask = direction.ToLower() == "up"
+                ? await _ctx.Tasks
+                    .Where(t => t.UserId == userId && t.Status == taskToMove.Status && t.Order < taskToMove.Order)
+                    .OrderByDescending(t => t.Order)
+                    .FirstOrDefaultAsync()
+                : await _ctx.Tasks
+                    .Where(t => t.UserId == userId && t.Status == taskToMove.Status && t.Order > taskToMove.Order)
+                    .OrderBy(t => t.Order)
+                    .FirstOrDefaultAsync();
+
+            if (siblingTask == null)
+            {
+                _logger.LogWarning("Komşu görev bulunamadı. Taşıma mümkün değil. Yön: {Direction}", direction);
+                return BadRequest(new
+                {
+                    message = direction.ToLower() == "up"
+                        ? "Görev zaten en üstte."
+                        : "Görev zaten en altta."
+                });
+            }
+            _logger.LogInformation("Komşu görev bulundu: '{SiblingTaskTitle}', Sırası: {SiblingOrder}",
+                siblingTask.Title, siblingTask.Order);
+
+            // Swap order
+            var originalOrder = taskToMove.Order;
+            taskToMove.Order = siblingTask.Order;
+            siblingTask.Order = originalOrder;
+            _logger.LogInformation("Sıralar takas edildi. Yeni sıra: {NewOrder}, Komşunun yeni sırası: {SiblingNewOrder}",
+                taskToMove.Order, siblingTask.Order);
+
+            try
+            {
+                await _ctx.SaveChangesAsync();
+                _logger.LogInformation("Değişiklikler veritabanına başarıyla kaydedildi.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SaveChangesAsync sırasında bir hata oluştu.");
+                return StatusCode(500, "Veritabanı kaydı sırasında bir hata oluştu.");
+            }
+
+            return NoContent();
         }
 
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> ChangeTaskStatus(int id, [FromQuery(Name = "to")] Models.TaskStatus newStatus)
+        {
+            var userId = GetUserId();
+            var taskToMove = await _ctx.Tasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+            if (taskToMove == null) return NotFound();
+            if (taskToMove.Status == newStatus) return NoContent();
+
+            var oldStatus = taskToMove.Status;
+            var oldOrder = taskToMove.Order;
+
+            var tasksToReorderInOldList = await _ctx.Tasks
+                .Where(t => t.UserId == userId && t.Status == oldStatus && t.Order > oldOrder)
+                .ToListAsync();
+            foreach (var t in tasksToReorderInOldList) t.Order--;
+
+            var newOrder = await _ctx.Tasks.CountAsync(t => t.UserId == userId && t.Status == newStatus);
+            taskToMove.Status = newStatus;
+            taskToMove.Order = newOrder;
+
+            await _ctx.SaveChangesAsync();
+            return NoContent();
+        }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(int id)
         {
             var userId = GetUserId();
-            if (userId == 0) return Unauthorized();
+            var taskToDelete = await _ctx.Tasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+            if (taskToDelete == null) return NotFound();
 
-            var task = await _ctx.Tasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
-            if (task == null)
-            {
-                return NotFound();
-            }
+            var oldStatus = taskToDelete.Status;
+            var oldOrder = taskToDelete.Order;
 
-            _ctx.Tasks.Remove(task);
+            _ctx.Tasks.Remove(taskToDelete);
 
-            // Silme işleminden sonra aynı statüdeki diğer görevlerin order'larını güncelle
             var tasksToReorder = await _ctx.Tasks
-                .Where(t => t.UserId == userId && t.Status == task.Status && t.Order > task.Order)
-                .OrderBy(t => t.Order)
+                .Where(t => t.UserId == userId && t.Status == oldStatus && t.Order > oldOrder)
                 .ToListAsync();
-
-            foreach (var ttr in tasksToReorder)
-            {
-                ttr.Order--;
-            }
-
-            await _ctx.SaveChangesAsync();
-            return NoContent();
-        }
-
-        [HttpPatch("{id}/order")]
-        public async Task<IActionResult> ChangeTaskOrder(int id, [FromQuery] string direction) // "up" or "down"
-        {
-            var userId = GetUserId();
-            if (userId == 0) return Unauthorized();
-
-            var task = await _ctx.Tasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
-            if (task == null)
-            {
-                return NotFound();
-            }
-
-            var list = await _ctx.Tasks
-                .Where(t => t.Status == task.Status && t.UserId == userId)
-                .OrderBy(t => t.Order)
-                .ToListAsync();
-
-            var currentIndex = list.FindIndex(t => t.Id == id);
-
-            if (direction.ToLower() == "up")
-            {
-                if (currentIndex > 0)
-                {
-                    // Swap order with the task above
-                    var taskAbove = list[currentIndex - 1];
-                    (task.Order, taskAbove.Order) = (taskAbove.Order, task.Order);
-                }
-                else
-                {
-                    return BadRequest(new { message = "Cannot move task further up." });
-                }
-            }
-            else if (direction.ToLower() == "down")
-            {
-                if (currentIndex < list.Count - 1)
-                {
-                    // Swap order with the task below
-                    var taskBelow = list[currentIndex + 1];
-                    (task.Order, taskBelow.Order) = (taskBelow.Order, task.Order);
-                }
-                else
-                {
-                    return BadRequest(new { message = "Cannot move task further down." });
-                }
-            }
-            else
-            {
-                return BadRequest(new { message = "Invalid direction. Use 'up' or 'down'." });
-            }
-
-            await _ctx.SaveChangesAsync();
-            return NoContent();
-        }
-
-        [HttpPatch("{id}/status")]
-        public async Task<IActionResult> ChangeTaskStatus(int id, [FromQuery] Models.TaskStatus newStatus) // enum'ı query'den alıyoruz
-        {
-            var userId = GetUserId();
-            if (userId == 0) return Unauthorized();
-
-            var task = await _ctx.Tasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
-            if (task == null)
-            {
-                return NotFound();
-            }
-
-            if (task.Status == newStatus) // Durum zaten aynıysa bir şey yapma
-            {
-                return NoContent();
-            }
-
-            var oldStatus = task.Status;
-
-            // Eski listedeki order'ı > olanları bir azalt
-            var tasksToReorderInOldList = await _ctx.Tasks
-                .Where(t => t.UserId == userId && t.Status == oldStatus && t.Order > task.Order)
-                .ToListAsync();
-            foreach(var ttr in tasksToReorderInOldList)
-            {
-                ttr.Order--;
-            }
-
-            // Yeni listedeki yerini belirle (sona ekle)
-            var newOrderInNewList = await _ctx.Tasks
-                .Where(t => t.UserId == userId && t.Status == newStatus)
-                .CountAsync();
-
-            task.Status = newStatus;
-            task.Order = newOrderInNewList;
+            foreach (var t in tasksToReorder) t.Order--;
 
             await _ctx.SaveChangesAsync();
             return NoContent();
