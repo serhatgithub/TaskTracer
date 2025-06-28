@@ -67,7 +67,7 @@ jobs:
           username: ${{ secrets.AWS_USERNAME }}
           key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
           script: |
-            cd ~/tasktracer-microservices
+            cd ~/TaskTracer
             git pull origin main
             docker compose pull
             docker compose up -d
