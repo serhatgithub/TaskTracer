@@ -1,75 +1,74 @@
-# Workflow'un adı
 name: Deploy to AWS EC2
 
-# Bu workflow ne zaman çalışacak?
-# 'main' branch'ine her push yapıldığında.
 on:
   push:
     branches:
       - main
 
 jobs:
-  # 'build-and-push' adında bir iş tanımlıyoruz
   build-and-push:
-    # Bu işin çalışacağı sanal makine tipi
     runs-on: ubuntu-latest
-
-    # İşin adımları
     steps:
-      # Adım 1: Kodu GitHub Actions makinesine kopyala (checkout)
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Adım 2: Docker Hub'a login ol
-      # Docker Hub kullanıcı adını ve token'ını GitHub Secrets'tan güvenli bir şekilde alıyoruz
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Adım 3: Docker Compose ile imajları build et ve push'la
-      # docker-compose.yml dosyasını kullanarak tüm servisleri build eder ve Docker Hub'a gönderir
-      # Not: docker-compose.yml dosyasında imaj isimlerini Docker Hub kullanıcı adınla prefix'lemen gerekiyor (bir sonraki adımda yapacağız)
-      - name: Build and push Docker images
-        run: |
-          docker-compose -f docker-compose.yml build
-          docker-compose -f docker-compose.yml push
+      - name: Build and push AuthService
+        uses: docker/build-push-action@v4
+        with:
+          context: ./TaskTracerMicroservices/TaskTracer.AuthService
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tasktracer-authservice:latest
 
-  # 'deploy' adında ikinci bir iş tanımlıyoruz
+      - name: Build and push UserService
+        uses: docker/build-push-action@v4
+        with:
+          context: ./TaskTracerMicroservices/TaskTracer.UserService
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tasktracer-userservice:latest
+
+      - name: Build and push TaskService
+        uses: docker/build-push-action@v4
+        with:
+          context: ./TaskTracerMicroservices/TaskTracer.TaskService
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tasktracer-taskservice:latest
+
+      - name: Build and push ApiGateway
+        uses: docker/build-push-action@v4
+        with:
+          context: ./TaskTracerMicroservices/TaskTracer.ApiGateway
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tasktracer-apigateway:latest
+
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v4
+        with:
+          context: ./task-ui
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tasktracer-frontend:latest
+
   deploy:
-    # Bu iş, 'build-and-push' işi bittikten sonra çalışacak
     needs: build-and-push
     runs-on: ubuntu-latest
-
     steps:
-      # Adım 1: SSH bağlantısı kurmak için anahtar dosyasını hazırla
-      # AWS_SSH_PRIVATE_KEY secret'ını bir dosyaya yazıyoruz
-      - name: Setup SSH Key
-        uses: webfactory/ssh-agent@v0.5.0
+      - name: Setup SSH
+        uses: appleboy/ssh-action@v0.1.10
         with:
-          ssh-private-key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
-
-      # Adım 2: SSH ile EC2'ye bağlan ve dağıtım script'ini çalıştır
-      # AWS_HOST ve AWS_USERNAME secret'larını kullanarak sunucuya bağlanır
-      - name: Deploy to EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.AWS_USERNAME }}@${{ secrets.AWS_HOST }} << 'EOF'
-            # --- Bu komutlar EC2 sunucusunda çalışacak ---
-
-            # Proje klasörüne git (eğer daha önce klonlamadıysan ilk seferde 'git clone' yapman gerekir)
-            cd /home/${{ secrets.AWS_USERNAME }}/tasktracer-microservices 
-            
-            # GitHub'dan en son değişiklikleri çek
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USERNAME }}
+          key: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/tasktracer-microservices
             git pull origin main
-
-            # Docker Hub'dan yeni imajları çek
-            docker-compose pull
-
-            # Konteynerleri yeni imajlarla yeniden başlat
-            docker-compose up -d --force-recreate
-
-            # Kullanılmayan eski imajları temizle (isteğe bağlı, disk alanı için iyi)
+            docker compose pull
+            docker compose up -d
             docker image prune -f
-
-          EOF
