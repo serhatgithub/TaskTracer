@@ -54,6 +54,8 @@ services:
     build:
       context: ./TaskTracerMicroservices/TaskTracer.TaskService
     restart: always
+    ports:
+      - "5003:80"
     environment:
       - ASPNETCORE_URLS=http://+:80 
       - ConnectionStrings__TaskDbConnection=Host=postgres_db;Port=5432;Database=tasktracer_db;Username=admin;Password=mysecretpassword

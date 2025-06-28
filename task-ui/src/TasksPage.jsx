@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import "./TasksPage.css";
-import { API_BASE_URL } from './apiConfig'; // Doğru şekilde import ediliyor.
+import { API_BASE_URL } from './apiConfig';
 
 function TasksPage({ onUserClick }) {
   const [tasks, setTasks] = useState([]);
@@ -11,23 +11,22 @@ function TasksPage({ onUserClick }) {
   const [filters, setFilters] = useState({ 0: "", 1: "", 2: "" });
   const [error, setError] = useState("");
 
-  const headers = {
+  const getHeaders = useCallback(() => ({
     Authorization: `Bearer ${localStorage.getItem("token")}`,
-  };
+  }), []);
 
   const loadTasks = useCallback(async () => {
     setError("");
     try {
       const res = await axios.get(`${API_BASE_URL}/tasks`, {
-        headers,
+        headers: getHeaders(),
       });
       setTasks(res.data);
     } catch (err) {
       console.error("Load tasks error:", err.response || err.message);
-      const apiErrorMessage = err.response?.data?.message || err.response?.data || "Görevler yüklenemedi.";
-      setError(apiErrorMessage);
+      setError(err.response?.data?.message || "Görevler yüklenemedi.");
     }
-  }, []); // useCallback'in bağımlılığından headers'ı kaldırdık, çünkü her render'da değişmiyor.
+  }, [getHeaders]);
 
   useEffect(() => {
     loadTasks();
@@ -42,7 +41,7 @@ function TasksPage({ onUserClick }) {
       await axios.post(
         `${API_BASE_URL}/tasks`,
         { title, status },
-        { headers }
+        { headers: getHeaders() }
       );
       setNewTitles({ ...newTitles, [status]: "" });
       loadTasks();
@@ -55,7 +54,7 @@ function TasksPage({ onUserClick }) {
   const handleDelete = async (id) => {
     setError("");
     try {
-      await axios.delete(`${API_BASE_URL}/tasks/${id}`, { headers });
+      await axios.delete(`${API_BASE_URL}/tasks/${id}`, { headers: getHeaders() });
       loadTasks();
     } catch (err) {
       console.error("Delete task error:", err.response || err.message);
@@ -69,7 +68,7 @@ function TasksPage({ onUserClick }) {
       await axios.patch(
         `${API_BASE_URL}/tasks/${id}/order?dir=${dir}`,
         null,
-        { headers }
+        { headers: getHeaders() }
       );
       loadTasks();
     } catch (err) {
@@ -84,7 +83,7 @@ function TasksPage({ onUserClick }) {
       await axios.patch(
         `${API_BASE_URL}/tasks/${id}/status?to=${to}`,
         null,
-        { headers }
+        { headers: getHeaders() }
       );
       loadTasks();
     } catch (err) {
