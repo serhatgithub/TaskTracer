@@ -1,58 +1,32 @@
 {
   "Routes": [
+
     {
-      "DownstreamPathTemplate": "/api/auth/{everything}",
+      "UpstreamPathTemplate": "/auth/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "OPTIONS" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         { "Host": "authservice", "Port": 80 }
       ],
-      "UpstreamPathTemplate": "/gateway/auth/{everything}",
-      "UpstreamHttpMethod": [ "POST" ]
+      "DownstreamPathTemplate": "/api/auth/{everything}"
     },
     {
-      "DownstreamPathTemplate": "/api/users/{everything}",
+      "UpstreamPathTemplate": "/users/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         { "Host": "userservice", "Port": 80 }
       ],
-      "UpstreamPathTemplate": "/gateway/users/{everything}",
-      "UpstreamHttpMethod": [ "GET", "PATCH" ]
+      "DownstreamPathTemplate": "/api/users/{everything}"
     },
     {
-      "DownstreamPathTemplate": "/api/tasks/{id}/order",
+      "UpstreamPathTemplate": "/tasks/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS" ],
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         { "Host": "taskservice", "Port": 80 }
       ],
-      "UpstreamPathTemplate": "/gateway/tasks/{id}/order",
-      "UpstreamHttpMethod": [ "PATCH" ]
-    },
-    {
-      "DownstreamPathTemplate": "/api/tasks/{id}/status",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        { "Host": "taskservice", "Port": 80 }
-      ],
-      "UpstreamPathTemplate": "/gateway/tasks/{id}/status",
-      "UpstreamHttpMethod": [ "PATCH" ]
-    },
-    {
-      "DownstreamPathTemplate": "/api/tasks/{id}",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        { "Host": "taskservice", "Port": 80 }
-      ],
-      "UpstreamPathTemplate": "/gateway/tasks/{id}",
-      "UpstreamHttpMethod": [ "DELETE" ]
-    },
-    {
-      "DownstreamPathTemplate": "/api/tasks",
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        { "Host": "taskservice", "Port": 80 }
-      ],
-      "UpstreamPathTemplate": "/gateway/tasks",
-      "UpstreamHttpMethod": [ "GET", "POST" ]
+      "DownstreamPathTemplate": "/api/tasks/{everything}"
     }
   ],
   "GlobalConfiguration": {}
