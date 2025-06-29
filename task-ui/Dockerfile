@@ -1,42 +1,13 @@
-# =================================================================
-# AŞAMA 1: REACT UYGULAMASINI BUILD ETMEK (BUILDER)
-# =================================================================
-FROM node:18-alpine AS builder
-
-# Build sırasında kullanılacak ortam değişkenini (ARG) bildir
-ARG REACT_APP_API_BASE_URL
-
-# Gelen ARG'ı bir environment variable (ENV) olarak ayarla ki 'npm run build' kullanabilsin
-ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
-
+FROM node:16 as build
 WORKDIR /app
-
-# Önce sadece package dosyalarını kopyala (Daha hızlı build için)
-COPY package*.json ./
-
-# Bağımlılıkları yükle
+COPY package.json ./
+COPY package-lock.json ./
 RUN npm install
-
-# Geri kalan tüm kodları kopyala
-COPY . .
-
-# Uygulamayı build et
+COPY . ./
+ARG REACT_APP_API_BASE_URL
+ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
 RUN npm run build
 
-
-# =================================================================
-# AŞAMA 2: ÜRETİM ORTAMI (NGINX)
-# =================================================================
-FROM nginx:stable-alpine
-
-# Build edilmiş statik dosyaları NGINX'in sunacağı klasöre kopyala
-COPY --from=builder /app/build /usr/share/nginx/html
-
-# Önbelleği kapatan özel NGINX yapılandırmamızı kopyala
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# 80 portunu dışarıya aç
-EXPOSE 80
-
-# NGINX'i çalıştır
-CMD ["nginx", "-g", "daemon off;"]
