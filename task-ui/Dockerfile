@@ -1,36 +1,42 @@
-# Aşama 1: Build (Node.js ortamında React uygulamasını build et)
-# Bu aşama, React uygulamasını statik dosyalara dönüştürür.
-FROM node:18-alpine AS build
+# =================================================================
+# AŞAMA 1: REACT UYGULAMASINI BUILD ETMEK (BUILDER)
+# =================================================================
+FROM node:18-alpine AS builder
+
+# Build sırasında kullanılacak ortam değişkenini (ARG) bildir
+ARG REACT_APP_API_BASE_URL
+
+# Gelen ARG'ı bir environment variable (ENV) olarak ayarla ki 'npm run build' kullanabilsin
+ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
+
 WORKDIR /app
 
-# package.json ve package-lock.json dosyalarını kopyala
-# Bu, katmanlı önbellekleme sayesinde, bağımlılıklar değişmediyse 'npm install' adımını atlar.
-COPY package.json ./
-COPY package-lock.json ./
+# Önce sadece package dosyalarını kopyala (Daha hızlı build için)
+COPY package*.json ./
 
 # Bağımlılıkları yükle
 RUN npm install
 
-# Tüm kaynak kodunu kopyala
+# Geri kalan tüm kodları kopyala
 COPY . .
 
-# React uygulamasını build et, statik dosyalar /app/build klasörüne oluşturulacak
+# Uygulamayı build et
 RUN npm run build
 
-# Aşama 2: Production (Hafif bir Nginx web sunucusu ile statik dosyaları sun)
-# Bu aşama, production imajını oluşturur.
+
+# =================================================================
+# AŞAMA 2: ÜRETİM ORTAMI (NGINX)
+# =================================================================
 FROM nginx:stable-alpine
 
-# Build aşamasında oluşturulan statik dosyaları Nginx'in web root klasörüne kopyala
-COPY --from=build /app/build /usr/share/nginx/html
+# Build edilmiş statik dosyaları NGINX'in sunacağı klasöre kopyala
+COPY --from=builder /app/build /usr/share/nginx/html
 
-# İsteğe bağlı: Nginx için özel bir konfigürasyon dosyası kopyalayabiliriz.
-# Bu, React Router gibi client-side routing kütüphaneleri için gereklidir.
-# Eğer /tasks gibi bir URL'yi yenilerseniz 404 hatası almamak için tüm istekleri index.html'e yönlendirir.
+# Önbelleği kapatan özel NGINX yapılandırmamızı kopyala
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Nginx'in dinleyeceği port (varsayılan 80)
+# 80 portunu dışarıya aç
 EXPOSE 80
 
-# Nginx'i başlat
+# NGINX'i çalıştır
 CMD ["nginx", "-g", "daemon off;"]
