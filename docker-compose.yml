@@ -84,6 +84,11 @@ services:
     restart: always
     ports:
       - "3000:80"
+    build:
+      context: ./task-ui
+      args:
+       - REACT_APP_API_BASE_URL
+    
     depends_on:
       - apigateway
 

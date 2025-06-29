@@ -55,6 +55,8 @@ jobs:
           context: ./task-ui
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tasktracer-frontend:latest
+          build-args: |
+            REACT_APP_API_BASE_URL=${{ secrets.API_BASE_URL }}
 
   deploy:
     needs: build-and-push
