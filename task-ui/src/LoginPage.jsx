@@ -66,7 +66,7 @@ function LoginPage({ onLogin }) {
       <div className="inner-box">
         <div className="header">
           <h2 style={{ color: "#691bf1" }}>
-            {isRegistering ? "Kayıt Ol" : "GİRİŞ YAP - Yeni Versiyon"}
+            {isRegistering ? "Kayıt Ol" : "Giriş Yap"}
           </h2>
           <button
             className="register-btn"
