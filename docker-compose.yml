@@ -20,10 +20,8 @@ services:
       retries: 5
 
   authservice:
+    image: serhatsdocker/tasktracer-authservice:latest
     container_name: auth-service-container
-    build:
-      context: ./TaskTracerMicroservices/TaskTracer.AuthService
-    image: senin-dockerhub-kullanici-adin/tasktracer-authservice:latest
     restart: always
     ports:
       - "5001:80"
@@ -38,10 +36,8 @@ services:
         condition: service_healthy
 
   userservice:
+    image: serhatsdocker/tasktracer-userservice:latest
     container_name: user-service-container
-    build:
-      context: ./TaskTracerMicroservices/TaskTracer.UserService
-    image: senin-dockerhub-kullanici-adin/tasktracer-userservice:latest
     restart: always
     environment:
       - ASPNETCORE_URLS=http://+:80
@@ -54,10 +50,8 @@ services:
         condition: service_healthy
 
   taskservice:
+    image: serhatsdocker/tasktracer-taskservice:latest
     container_name: task-service-container
-    build:
-      context: ./TaskTracerMicroservices/TaskTracer.TaskService
-    image: senin-dockerhub-kullanici-adin/tasktracer-taskservice:latest
     restart: always
     ports:
       - "5003:80"
@@ -72,13 +66,11 @@ services:
         condition: service_healthy
 
   apigateway:
+    image: serhatsdocker/tasktracer-apigateway:latest
     container_name: api-gateway-container
-    build:
-      context: ./TaskTracerMicroservices/TaskTracer.ApiGateway
-    image: senin-dockerhub-kullanici-adin/tasktracer-apigateway:latest
+    restart: always
     ports:
       - "5000:80"
-    restart: always
     environment:
       - ASPNETCORE_URLS=http://+:80
     depends_on:
@@ -87,15 +79,11 @@ services:
       - taskservice
 
   frontend:
+    image: serhatsdocker/tasktracer-frontend:latest
     container_name: frontend-container
-    build:
-      context: ./task-ui
-      args:
-        - REACT_APP_API_BASE_URL=http://localhost:5000/gateway
-    image: senin-dockerhub-kullanici-adin/tasktracer-frontend:latest
+    restart: always
     ports:
       - "3000:80"
-    restart: always
     depends_on:
       - apigateway
 

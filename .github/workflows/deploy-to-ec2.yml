@@ -60,7 +60,7 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Setup SSH
+      - name: SSH into EC2 and deploy
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.AWS_HOST }}
