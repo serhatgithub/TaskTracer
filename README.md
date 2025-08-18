@@ -1,4 +1,4 @@
-# TaskTracer 🚀
+# TaskTracer 
 
 TaskTracer, mikroservis tabanlı, Docker üzerinde konteynerleştirilen ve AWS üzerinde bir CI/CD hattı ile dağıtılan modern bir **Görev Yönetim Uygulaması**dır.
 ---
